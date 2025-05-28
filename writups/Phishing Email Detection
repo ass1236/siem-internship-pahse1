@@ -1,0 +1,83 @@
+🎯 Objective
+Simulate a phishing attack in a controlled lab environment using GoPhish and MailHog, then detect malicious activity on the target system using Sysmon logs and Wazuh rules.
+
+🧰 Tools Used
+Tool |	Purpose
+------------------------------------------------------------------
+GoPhish	| Open-source phishing framework to simulate email attacks
+MailHog	| SMTP testing server to safely capture phishing emails
+
+📧 GoPhish: Phishing Campaign Simulator
+GoPhish was used to create and deliver realistic phishing emails. These emails contained links or attachments such as .js, .vbs, or .exe payloads.
+
+✅ GoPhish Setup
+ ** Admin panel accessible via: http://<attacker-ip>:3333
+ ** Phishing site served at: http://<attacker-ip>:80
+ ** Sending profile configured with MailHog (SMTP: victim-ip:1025)
+
+✅ Campaign Flow
+1- Email Template:
+   Included a malicious file and text to indicate there is a problem at the victim and he should download the file. 
+
+2- Landing Page:
+   (Optional) Fake login form or redirect for victim interaction.
+
+3- Sending Profile:
+   Configured to use MailHog (SMTP on port 1025, no auth required).
+
+4- User Group:
+   Test victim email address configured (MailHog receives it).
+
+5- Launch Campaign:
+   GoPhish sends the phishing email to the simulated victim.
+
+📥 MailHog: Safe SMTP Testing Server
+MailHog is a local SMTP server and webmail UI designed for capturing emails without sending them over the Internet.
+
+✅ Role in the Lab
+ ** Captures phishing emails sent by GoPhish.
+ **  Allows reviewing content, attachments, and links from the attacker’s campaign.
+ ** Prevents accidental delivery of test emails to real accounts.
+
+✅ Web Interface
+  ** Accessed via http://localhost:8025
+  ** Emails are stored in memory and visible in the web inbox.
+
+🧪 Attack Simulation Flow
+1- Victim opens email in MailHog, clicks the malicious link, or downloads the attachment.
+2- Payload is dropped in a directory like C:\Users\<username>\Downloads\.
+3- Sysmon logs the file creation (Event ID 11) and process execution (Event ID 1).
+4- Wazuh parses Sysmon logs and applies built-in and custom rules to generate alerts.
+
+🛑 Detection with Wazuh
+
+🔍 Built-in Rules Triggered
+** 92200 – Scripting file created under Windows Temp or User folder
+** 92205 – PowerShell dropped a file into the Windows root
+
+🧩 Custom Rules Added
+group name="local,custom_rules">
+
+  <!-- Custom phishing detection rule: scripting file created -->
+  <rule id="17200" level="10">
+    <if_sid>92200</if_sid>
+    <description>Custom Alert: Scripting file created under Temp or User folder (potential phishing)</description>
+    <group>phishing_detection,sysmon,custom_alert</group>
+  </rule>
+
+  <!-- Optional correlation with Powershell dropping an EXE -->
+  <rule id="17201" level="12" frequency="2" timeframe="60">
+    <if_matched_sid>92200</if_matched_sid>
+    <if_matched_sid>92205</if_matched_sid>
+    <description>Phishing Indicator: Scripting file and EXE created via PowerShell within 60 seconds</description>
+    <group>phishing_detection,correlation,custom_alert</group>
+  </rule>
+</group>
+
+✅ Conclusion
+This lab effectively demonstrated how to:
+
+** Simulate phishing emails using GoPhish and MailHog.
+** Capture victim interaction and payload behavior.
+** Detect malicious activity using Sysmon + Wazuh with both built-in and custom rules.
+
