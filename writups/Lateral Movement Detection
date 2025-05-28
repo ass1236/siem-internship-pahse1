@@ -1,0 +1,14 @@
+📌 Overview
+Lateral movement is a crucial stage in the cyber attack kill chain. After an attacker compromises an initial system, they attempt to move across the network to access other valuable systems (e.g., domain controllers, file servers, databases). This phase allows attackers to deepen access, maintain persistence, or escalate privileges.
+In this simulation, I performed a lateral movement attempt using RDP, detected by a custom Wazuh rule tailored for Logon Type 10 and internal source IPs.
+
+🧪 Objective
+1- Simulate lateral movement using Hydra to brute-force RDP logins.
+2- Detect unauthorized RDP logon attempts from an internal IP.
+3-Generate and log the activity on the monitored Windows endpoint.
+4- Use Wazuh to correlate and alert on the suspicious behavior.
+
+🔓 Attack Execution (Simulated)
+RDP Brute Force Using Hydra:
+On the attacker machine (Kali), I launched:
+hydra -t 4 -V -f -l testuser -P password rdp://192.168.1.100
