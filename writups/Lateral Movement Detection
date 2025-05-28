@@ -9,6 +9,37 @@ In this simulation, I performed a lateral movement attempt using RDP, detected b
 4- Use Wazuh to correlate and alert on the suspicious behavior.
 
 🔓 Attack Execution (Simulated)
-RDP Brute Force Using Hydra:
-On the attacker machine (Kali), I launched:
-hydra -t 4 -V -f -l testuser -P password rdp://192.168.1.100
+1- RDP Brute Force Using Hydra:
+   On the attacker machine (Kali), I launched:
+   -->> hydra  -l user_name -P password rdp://192.168.X.X
+2- Target Machine Logs Event:
+  ** Windows Security Event ID 4624 (Logon Success)
+  ** Logon Type: 10 (RemoteInteractive = RDP)
+  ** Source IP: 192.168.X.X (internal network)
+📡 Wazuh Rule Configuration
+I used a custom rule to detect Logon Type 10 events coming from internal IPs, based on Wazuh's built-in rule 92657.
+  <group name="rdp-lateral-movement">
+
+    <rule id="100600" level="14">
+      <if_sid>92657</if_sid>
+      <description>🚨 Custom: Lateral movement via RDP detected (based on rule 92657)</description>
+    </rule>
+  </group>
+** Base SID: 92657 (matches Windows Logon Success events)
+** Trigger Condition: Logon Type 10 (RDP)
+** Level: 14 (high severity)
+** Customization: Can be extended to include checks for source IP pattern 192.168.X.X
+
+📈 Detection Output in Wazuh
+After running the attack, Wazuh generated an alert with the following key fields:
+
+Field	        Value
+Rule ID	      100600
+Rule Level	   14
+Description	  🚨 Custom: Lateral movement via RDP detected
+Event ID	    4624
+
+✅ Conclusion
+This simulation demonstrates how attackers can use built-in Windows services like RDP to move laterally within a network.
+By combining event correlation, logon types, and source IP awareness, Wazuh can effectively alert on suspicious lateral movement attempts, even in noisy environments.
+
