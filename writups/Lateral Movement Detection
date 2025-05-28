@@ -36,8 +36,8 @@ After running the attack, Wazuh generated an alert with the following key fields
 Field	        Value
 Rule ID	      100600
 Rule Level	   14
-Description	  🚨 Custom: Lateral movement via RDP detected
-Event ID	    4624
+Description	   🚨 Custom: Lateral movement via RDP detected
+Event ID	      4624
 
 ✅ Conclusion
 This simulation demonstrates how attackers can use built-in Windows services like RDP to move laterally within a network.
