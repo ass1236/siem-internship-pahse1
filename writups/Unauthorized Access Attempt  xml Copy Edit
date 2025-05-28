@@ -1,0 +1,40 @@
+📌 Objective
+To detect after-hours logins by privileged users (e.g., Administrator account), specifically aligned with MITRE ATT&CK technique T1078.004 – Valid Accounts: Privileged Accounts. This can help identify unauthorized access activities that typically occur outside normal working hours.
+
+🧪 Test Scenario
+Date: May 20, 2025
+Time of Login: 5:46 PM (after-hours)
+User Account: Administrator
+Host: Windows endpoint monitored by Wazuh agent
+Method: Remote desktop logon
+
+🛠️ Wazuh Rule Configuration
+I added the following custom rule to /var/ossec/etc/rules/local_rules.xml:
+<group name="local,custom_rules">
+  <rule id="17101" level="9">
+    <if_sid>92657</if_sid>
+    <time>5 pm  - 8:30 am</time>
+    <description>After-hours successful remote login detected for Administrator account (T1078.004).</description>
+    <group>login_time,t1078.004,credential_access,rdp,windows,custom_alert</group>
+  </rule>
+</group>
+
+🔍 Rule Explanation
+1- <if_sid>92657</if_sid>: Matches Wazuh’s built-in rule for successful remote logins (via RDP).
+2- <time>5 pm - 8:30 am</time>: Restricts detection to off-hours (non-business hours).
+3- <group> tag: Tags the alert with:
+    ** t1078.004: MITRE ATT&CK technique
+    ** credential_access, rdp: Tactic/technique context
+    ** windows, custom_alert: Categorization for filtering in Wazuh dashboard
+
+✅ Validation Results
+1- Logged in as Administrator at 5:46 PM using RDP.
+2- Wazuh Agent captured the Windows Event ID 4624 (successful logon).
+3- Rule 92657 (predefined in Wazuh) was triggered.
+4-Custom Rule 17101 matched:
+  ** Time of the event was within the specified after-hours range.
+  ** Result: Alert was successfully triggered by the Wazuh manager.
+
+✅ Summary
+ Wazuh custom rule successfully detected a remote login by Administrator outside business work , which falls within your defined after-hours range. 
+The rule is mapped to MITRE T1078.004 and serves as a strong control for monitoring privileged account misuse outside business hours.
