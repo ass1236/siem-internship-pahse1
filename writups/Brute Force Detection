@@ -1,0 +1,43 @@
+📌 Overview
+Brute force attacks are one of the most common techniques used by attackers to gain unauthorized access to systems. These attacks involve repeatedly attempting to guess valid usernames and passwords.
+Detecting and responding to brute force attempts early can prevent credential compromise and lateral movement within a network.
+Wazuh provides a robust set of built-in rules that automatically detect brute force patterns across authentication logs on Windows and Linux systems.
+
+🛠️ Data Sources
+Windows:
+ ** Event ID 4625 – Failed logon attempt.
+ ** Event ID 4624 – Successful logon.
+ ** Event ID 4672 – Special privileges assigned to a new logon.
+
+🔧 Attack Simulation
+To simulate a brute force attack and test Wazuh’s detection capabilities, I used Hydra, a fast and flexible login cracker.
+
+🔍 Command Used:
+hydra -l user_name -P password.txt rdp://192.168.X.X
+ ** -l user_name: specifies the target username
+ ** -P password.txt: supplies a list of potential passwords
+ ** rdp://192.168.X.X: defines the target RDP service and IP address
+
+This generated multiple authentication attempts against a Windows system over Remote Desktop Protocol (RDP).
+
+⚙️ Detection Using Wazuh Built-In Rules
+Wazuh’s default ruleset successfully detected the brute force activity through the following rule IDs:
+
+** 60122 – Logs each failed login (Event ID 4625)
+  “Logon Failure – Unknown user or bad password”
+ ** 60204 – Aggregates multiple 4625 events into a brute force detection
+   “Multiple Windows Logon Failures”
+ ** 67028 – Triggers if special privileges are assigned post-compromise
+   “Special privileges assigned to new logon”
+ ** 92657 – Detects potentially successful unauthorized RDP login
+   “Successful Remote Logon Detected – Possible pass-the-hash attack”
+
+The correlation of failed attempts followed by a successful logon highlights potential brute force success and post-exploitation activity.
+
+✅ Summary
+By using the Hydra tool to simulate a brute force attack on an RDP service, and leveraging Wazuh’s built-in rule set, I successfully detected:
+
+ ** Repeated authentication failures
+ ** Escalated alerts for brute force behavior
+ ** Post-compromise activity including privilege escalation
+ ** This validates Wazuh's capability to automatically detect and alert on brute force attacks in real-world scenarios without the need for custom rule development
